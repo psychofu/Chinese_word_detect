@@ -157,7 +157,7 @@ class BiLSTM_CRF(object):
         :param dev:
         :return:
         """
-        saver = tf.train.Saver(tf.global_variables())
+        saver = tf.train.Saver(tf.global_variables())   # Create a saver.
 
         with tf.Session(config=self.config) as sess:
             sess.run(self.init_op)
@@ -206,7 +206,7 @@ class BiLSTM_CRF(object):
 
         start_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         batches = batch_yield(train, self.batch_size, self.vocab, self.tag2label, shuffle=self.shuffle)
-        for step, (seqs, labels) in enumerate(batches):
+        for step, (seqs, labels) in enumerate(batches):     # batch_size个数据(batch_size句话)
 
             sys.stdout.write(' processing: {} batch / {} batches.'.format(step + 1, num_batches) + '\r')
             step_num = epoch * num_batches + step + 1

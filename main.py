@@ -17,18 +17,14 @@ config = None
 parser = argparse.ArgumentParser(description='BiLSTM-CRF for Error Correction in Chinese')
 
 # 训练数据MEDICAL路径
-parser.add_argument('--dataset_name', type=str, default='MEDICAL',
-                    help='choose a dataset name, --dataset_name MEDICAL')
-# minibatch 训练的batch大小
+parser.add_argument('--dataset_name', type=str, default='MEDICAL', help='choose a dataset name, --dataset_name MEDICAL')
 parser.add_argument('--batch_size', type=int, default=40, help='#sample of each minibatch')
-# 迭代次数
 parser.add_argument('--epoch', type=int, default=100, help='#epoch of training')
 parser.add_argument('--hidden_dim', type=int, default=300, help='#dim of hidden state')
 parser.add_argument('--optimizer', type=str, default='Adam', help='Adam/Adadelta/Adagrad/RMSProp/Momentum/SGD')
 parser.add_argument('--CRF', type=bool, default=True, help='use CRF at the top layer. if False, use Softmax')
 parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
-# clip 梯度裁剪
-parser.add_argument('--clip', type=float, default=5.0, help='gradient clipping')
+parser.add_argument('--clip', type=float, default=5.0, help='gradient clipping')    # clip 梯度裁剪
 parser.add_argument('--dropout', type=float, default=0.5, help='dropout keep_prob')
 parser.add_argument('--embedding_dim', type=int, default=300, help='random init char embedding_dim')
 parser.add_argument('--shuffle', type=bool, default=True, help='shuffle training data before each epoch')
@@ -37,15 +33,15 @@ parser.add_argument('--demo_model', type=str, default='correctModel', help='mode
 args = parser.parse_args()
 
 # vocabulary build
-# if args.mode == "train":
-#     vocab_build(os.path.join('data_path', args.dataset_name, 'word2id.pkl'),
-#                 os.path.join('data_path', args.dataset_name, 'train_data.txt'))
+if args.mode == "train":
+    vocab_build(os.path.join('data_path', args.dataset_name, 'word2id.pkl'),
+                os.path.join('data_path', args.dataset_name, 'train_data.txt'))
 
 # get word dictionary
 word2id = read_dictionary(os.path.join('data_path', args.dataset_name, 'word2id.pkl'))
 
 # build char embeddings
-embeddings = random_embedding(word2id, args.embedding_dim)
+embeddings = random_embedding(word2id, args.embedding_dim)  # vocab_size *
 
 # True is 1, False is 0
 tag2label = {"T":1, "F":0}

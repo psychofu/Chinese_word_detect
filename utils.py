@@ -39,16 +39,12 @@ def read_trains(corpus_path):
     :return: data
     """
     data = []
-
     with open(corpus_path, encoding='utf-8') as fr:
         lines = fr.readlines()      # 方法用于读取所有行(直到结束符 EOF)并返回列表
     sent_, tag_ = [], []
-
     for line in lines:
-
         if line != '\n':        # 语料库中的句子空一行代表一句
-
-            [char, label] = line.strip().split()
+            [char, label] = line.strip().split()    # 按空格split
             sent_.append(char)
             tag_.append(label)
         else:
@@ -65,7 +61,7 @@ def vocab_build(vocab_path, corpus_path, min_count=1):  # min_count设置过滤�
     :param min_count:
     :return:
     """
-    data = read_trains(corpus_path)
+    data = read_trains(corpus_path) # data[0] <class 'tuple'>: (['痛', '点', '穿', '刺', '组', '织', '中', '见', '异', '常', '征', '象', '。'], ['F', 'F', 'T', 'T', 'T', 'T', 'T', 'T', 'T', 'F', 'F', 'F', 'T'])
     word2id = {}
     for sent_, tag_ in data:
         for word in sent_:
