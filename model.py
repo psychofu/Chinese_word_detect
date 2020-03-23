@@ -4,8 +4,8 @@ import time
 
 import tensorflow as tf
 from tensorflow.contrib.crf import crf_log_likelihood
-from tensorflow.contrib.crf import viterbi_decode
 from tensorflow.contrib.rnn import LSTMCell
+import numpy as np
 
 from utils import pad_sequences, batch_yield, conlleval, get_logger
 
@@ -248,7 +248,7 @@ class BiLSTM_CRF(object):
 
         self.logger.info('===========validation / test===========')
         label_list_dev, seq_len_list_dev = self.dev_one_epoch(sess, dev)
-        self.evaluate(label_list_dev, seq_len_list_dev, dev, epoch)
+        self.evaluate(label_list_dev, dev)
 
     def get_feed_dict(self, seqs, labels=None, lr=None, dropout=None):
         """
@@ -295,14 +295,14 @@ class BiLSTM_CRF(object):
         :return: label_list
                  seq_len_list
         """
-        feed_dict, seq_len_list = self.get_feed_dict(seqs, dropout=1.0)
+        feed_dict, seq_len_list = self.get_feed_dict(seqs, dropout=1.0)     # predict时不使用dropout，故为1.0
 
         if self.CRF:
             logits, transition_params = sess.run([self.logits, self.transition_params],
                                                  feed_dict=feed_dict)
             label_list = []
             for logit, seq_len in zip(logits, seq_len_list):
-                viterbi_seq, _ = viterbi_decode(logit[:seq_len], transition_params)
+                viterbi_seq, _ = self.viterbiDecode(logit[:seq_len], transition_params)
                 label_list.append(viterbi_seq)
             return label_list, seq_len_list
 
@@ -310,7 +310,35 @@ class BiLSTM_CRF(object):
             label_list = sess.run(self.labels_softmax_, feed_dict=feed_dict)
             return label_list, seq_len_list
 
-    def evaluate(self, label_list, seq_len_list, data, epoch=None):
+    def viterbiDecode(self, score, transition_params):
+        """Decode the highest scoring sequence of tags outside of TensorFlow.
+        This should only be used at test time.
+        Args:
+          score: A [seq_len, num_tags] matrix of unary potentials.
+          transition_params: A [num_tags, num_tags] matrix of binary potentials.
+        Returns:
+          viterbi: A [seq_len] list of integers containing the highest scoring tag
+              indices.
+          viterbi_score: A float containing the score for the Viterbi sequence.
+        """
+        trellis = np.zeros_like(score)
+        backpointers = np.zeros_like(score, dtype=np.int32)
+        trellis[0] = score[0]
+
+        for t in range(1, score.shape[0]):
+            v = np.expand_dims(trellis[t - 1], 1) + transition_params
+            trellis[t] = score[t] + np.max(v, 0)
+            backpointers[t] = np.argmax(v, 0)
+
+        viterbi = [np.argmax(trellis[-1])]
+        for bp in reversed(backpointers[1:]):
+            viterbi.append(bp[viterbi[-1]])
+        viterbi.reverse()
+
+        viterbi_score = np.max(trellis[-1])
+        return viterbi, viterbi_score
+
+    def evaluate(self, label_list, data):
         """
 
         :param label_list:
