@@ -154,7 +154,7 @@ def pad_sequences(sequences, pad_mark=0):
         seq = list(seq)
         seq_ = seq[:max_len] + [pad_mark] * max(max_len - len(seq), 0)
         seq_list.append(seq_)
-        seq_len_list.append(min(len(seq), max_len))
+        seq_len_list.append(min(len(seq), max_len))     # 每个句子的长度list
     return seq_list, seq_len_list
 
 

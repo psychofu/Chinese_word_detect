@@ -61,7 +61,10 @@ class BiLSTM_CRF(object):
             word_embeddings = tf.nn.embedding_lookup(params=_word_embeddings,       # 对照embedding将batch * sentence转换，batch * sentence * 300
                                                      ids=self.word_ids, # [[一句话的索引], [], []]
                                                      name="word_embeddings")
-        self.word_embeddings = tf.nn.dropout(word_embeddings, self.dropout_pl)      # TODO 0.5， 可考虑注释
+        # 为了防止或减轻过拟合，让某个神经元的激活值以一定的概率p，让其停止工作，这次训练过程中不更新权值，也不参加神经网络的计算
+        # train时使用，test时dropout_pl设为1，即不dropout神经元
+        self.word_embeddings = tf.nn.dropout(word_embeddings, self.dropout_pl)      # TODO 0.5， 可考虑调小
+        # 为了缓解梯度消失
         # self.word_embeddings = tf.layers.batch_normalization(word_embeddings)      # TODO 使用batch_normalization
 
     def biLSTM_layer_op(self):
@@ -75,7 +78,7 @@ class BiLSTM_CRF(object):
                 sequence_length=self.sequence_lengths,
                 dtype=tf.float32)
             output = tf.concat([output_fw_seq, output_bw_seq], axis=-1)     # batch_size * sent_size * 600
-            output = tf.nn.dropout(output, self.dropout_pl)     # 这里的dropout可以考虑去掉
+            output = tf.nn.dropout(output, self.dropout_pl)
             # output = tf.layers.batch_normalization(output)
 
         with tf.variable_scope("proj"):
@@ -91,6 +94,7 @@ class BiLSTM_CRF(object):
 
             s = tf.shape(output)    # return the shape of tensor  ：  batch_size * max_sentence_length * 600
             output = tf.reshape(output, [-1, 2 * self.hidden_dim])      # ? * 600
+            # 相当于tensorflow2.0中的Dense层
             pred = tf.matmul(output, W) + b     # shape: ? * 2
 
             self.logits = tf.reshape(pred, [-1, s[1], self.num_tags])       # batch_size * max_sentence_length * 2
@@ -135,6 +139,7 @@ class BiLSTM_CRF(object):
             else:
                 optim = tf.train.GradientDescentOptimizer(learning_rate=self.lr_pl)
 
+            # 这里可以考虑不使用clip_grad，使用之后所有梯度值在这个范围内
             grads_and_vars = optim.compute_gradients(self.loss)
             grads_and_vars_clip = [[tf.clip_by_value(g, -self.clip_grad, self.clip_grad), v] for g, v in grads_and_vars]
             self.train_op = optim.apply_gradients(grads_and_vars_clip, global_step=self.global_step)
@@ -152,7 +157,9 @@ class BiLSTM_CRF(object):
         :param sess:
         :return:
         """
+        # merge_all 可以将所有summary全部保存到磁盘，以便tensorboard显示。
         self.merged = tf.summary.merge_all()
+        # 指定一个文件用来保存图。
         self.file_writer = tf.summary.FileWriter(self.summary_path, sess.graph)
 
     def train(self, train, dev):        # 这里的train和dev为所有的数据
@@ -162,6 +169,14 @@ class BiLSTM_CRF(object):
         :param dev:
         :return:
         """
+      # In addition to checkpoint files, savers keep a protocol buffer on disk with
+      # the list of recent checkpoints. This is used to manage numbered checkpoint
+      # files and by `latest_checkpoint()`, which makes it easy to discover the path
+      # to the most recent checkpoint. That protocol buffer is stored in a file named
+      # 'checkpoint' next to the checkpoint files.
+      #
+      # If you create several savers, you can specify a different filename for the
+      # protocol buffer file in the call to `save()`.
         saver = tf.train.Saver(tf.global_variables())   # Create a saver.
 
         with tf.Session(config=self.config) as sess:
@@ -169,7 +184,7 @@ class BiLSTM_CRF(object):
             self.add_summary(sess)
 
             for epoch in range(self.epoch_num):     # 迭代次数
-                self.run_one_epoch(sess, train, dev, self.tag2label, epoch, saver)
+                self.run_one_epoch(sess, train, dev, epoch, saver)
 
     def test(self, test):
         saver = tf.train.Saver()
@@ -196,7 +211,7 @@ class BiLSTM_CRF(object):
         tag = [label2tag[label] for label in label_list[0]]
         return tag
 
-    def run_one_epoch(self, sess, train, dev, tag2label, epoch, saver):
+    def run_one_epoch(self, sess, train, dev, epoch, saver):
         """
 
         :param sess:
@@ -207,12 +222,12 @@ class BiLSTM_CRF(object):
         :param saver:
         :return:
         """
-        num_batches = (len(train) + self.batch_size - 1) // self.batch_size
+        num_batches = (len(train) + self.batch_size - 1) // self.batch_size # 更加batch_size计算需要多少个batch
 
         start_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        # 句子和tag转变为数值和01
         batches = batch_yield(train, self.batch_size, self.vocab, self.tag2label, shuffle=self.shuffle)
         for step, (seqs, labels) in enumerate(batches):     # batch_size个数据(batch_size句话)
-
             sys.stdout.write(' processing: {} batch / {} batches.'.format(step + 1, num_batches) + '\r')
             step_num = epoch * num_batches + step + 1
             feed_dict, _ = self.get_feed_dict(seqs, labels, self.lr, self.dropout_keep_prob)
@@ -246,8 +261,8 @@ class BiLSTM_CRF(object):
         """
         word_ids, seq_len_list = pad_sequences(seqs, pad_mark=0)
 
-        feed_dict = {self.word_ids: word_ids,
-                     self.sequence_lengths: seq_len_list}
+        feed_dict = {self.word_ids: word_ids,   # shape: batch_size * max_len_snet
+                     self.sequence_lengths: seq_len_list}   # shape: batch_size
         if labels is not None:
             labels_, _ = pad_sequences(labels, pad_mark=0)
             feed_dict[self.labels] = labels_

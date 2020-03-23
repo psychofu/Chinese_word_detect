@@ -19,7 +19,7 @@ parser = argparse.ArgumentParser(description='BiLSTM-CRF for Error Correction in
 # 训练数据MEDICAL路径
 parser.add_argument('--dataset_name', type=str, default='MEDICAL', help='choose a dataset name, --dataset_name MEDICAL')
 parser.add_argument('--batch_size', type=int, default=40, help='#sample of each minibatch')
-parser.add_argument('--epoch', type=int, default=100, help='#epoch of training')
+parser.add_argument('--epoch', type=int, default=10, help='#epoch of training')
 parser.add_argument('--hidden_dim', type=int, default=300, help='#dim of hidden state')
 parser.add_argument('--optimizer', type=str, default='Adam', help='Adam/Adadelta/Adagrad/RMSProp/Momentum/SGD')
 parser.add_argument('--CRF', type=bool, default=True, help='use CRF at the top layer. if False, use Softmax')
