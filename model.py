@@ -45,8 +45,8 @@ class BiLSTM_CRF(object):
         self.init_op()
 
     def add_placeholders(self):
-        self.word_ids = tf.placeholder(tf.int32, shape=[None, None], name="word_ids")   # batch_size * seq_len
-        self.labels = tf.placeholder(tf.int32, shape=[None, None], name="labels")   # shape: batch_size * seq_len
+        self.word_ids = tf.placeholder(tf.int32, shape=[None, None], name="word_ids")   # batch_size * max_seq_len
+        self.labels = tf.placeholder(tf.int32, shape=[None, None], name="labels")   # shape: batch_size * max_seq_len
         self.sequence_lengths = tf.placeholder(tf.int32, shape=[None], name="sequence_lengths")     # batch_size
         self.dropout_pl = tf.placeholder(tf.float32, shape=[], name="dropout")  # 一个值
         self.lr_pl = tf.placeholder(tf.float32, shape=[], name="lr")        # 一个值
@@ -61,8 +61,8 @@ class BiLSTM_CRF(object):
             word_embeddings = tf.nn.embedding_lookup(params=_word_embeddings,       # 对照embedding将batch * sentence转换，batch * sentence * 300
                                                      ids=self.word_ids, # [[一句话的索引], [], []]
                                                      name="word_embeddings")
-        # self.word_embeddings = tf.nn.dropout(word_embeddings, self.dropout_pl)      # TODO 0.5， 可考虑注释
-        self.word_embeddings = tf.layers.batch_normalization(word_embeddings)      # TODO 使用batch_normalization
+        self.word_embeddings = tf.nn.dropout(word_embeddings, self.dropout_pl)      # TODO 0.5， 可考虑注释
+        # self.word_embeddings = tf.layers.batch_normalization(word_embeddings)      # TODO 使用batch_normalization
 
     def biLSTM_layer_op(self):
         with tf.variable_scope("bi-lstm"):
@@ -75,8 +75,8 @@ class BiLSTM_CRF(object):
                 sequence_length=self.sequence_lengths,
                 dtype=tf.float32)
             output = tf.concat([output_fw_seq, output_bw_seq], axis=-1)     # batch_size * sent_size * 600
-            # output = tf.nn.dropout(output, self.dropout_pl)     # 这里的dropout可以考虑去掉
-            output = tf.layers.batch_normalization(output)
+            output = tf.nn.dropout(output, self.dropout_pl)     # 这里的dropout可以考虑去掉
+            # output = tf.layers.batch_normalization(output)
 
         with tf.variable_scope("proj"):
             W = tf.get_variable(name="W",
@@ -135,13 +135,13 @@ class BiLSTM_CRF(object):
             else:
                 optim = tf.train.GradientDescentOptimizer(learning_rate=self.lr_pl)
 
-            # grads_and_vars = optim.compute_gradients(self.loss)
-            # grads_and_vars_clip = [[tf.clip_by_value(g, -self.clip_grad, self.clip_grad), v] for g, v in grads_and_vars]
-            # self.train_op = optim.apply_gradients(grads_and_vars_clip, global_step=self.global_step)
-            with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
-                grads_and_vars = optim.compute_gradients(self.loss)
-                grads_and_vars_clip = [[tf.clip_by_value(g, -self.clip_grad, self.clip_grad), v] for g, v in grads_and_vars]
-                self.train_op = optim.apply_gradients(grads_and_vars_clip, global_step=self.global_step)
+            grads_and_vars = optim.compute_gradients(self.loss)
+            grads_and_vars_clip = [[tf.clip_by_value(g, -self.clip_grad, self.clip_grad), v] for g, v in grads_and_vars]
+            self.train_op = optim.apply_gradients(grads_and_vars_clip, global_step=self.global_step)
+            # with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
+            #     grads_and_vars = optim.compute_gradients(self.loss)
+            #     grads_and_vars_clip = [[tf.clip_by_value(g, -self.clip_grad, self.clip_grad), v] for g, v in grads_and_vars]
+            #     self.train_op = optim.apply_gradients(grads_and_vars_clip, global_step=self.global_step)
 
     def init_op(self):
         self.init_op = tf.global_variables_initializer()
