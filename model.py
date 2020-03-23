@@ -45,15 +45,16 @@ class BiLSTM_CRF(object):
         self.init_op()
 
     def add_placeholders(self):
-        self.word_ids = tf.placeholder(tf.int32, shape=[None, None], name="word_ids")   # batch_size * len(sentence)
-        self.labels = tf.placeholder(tf.int32, shape=[None, None], name="labels")   # shape: batch_size * max_seq_len
+        self.word_ids = tf.placeholder(tf.int32, shape=[None, None], name="word_ids")   # batch_size * seq_len
+        self.labels = tf.placeholder(tf.int32, shape=[None, None], name="labels")   # shape: batch_size * seq_len
         self.sequence_lengths = tf.placeholder(tf.int32, shape=[None], name="sequence_lengths")     # batch_size
         self.dropout_pl = tf.placeholder(tf.float32, shape=[], name="dropout")  # 一个值
         self.lr_pl = tf.placeholder(tf.float32, shape=[], name="lr")        # 一个值
 
     def lookup_layer_op(self):
         with tf.variable_scope("words"):
-            _word_embeddings = tf.Variable(self.embeddings,
+            # shape : vocab_size * hide_dim   每一个字的embedding  这个是要训练的，已经初始化
+            _word_embeddings = tf.Variable(initial_value=self.embeddings,
                                            dtype=tf.float32,
                                            trainable=True,
                                            name="_word_embeddings")
@@ -73,7 +74,7 @@ class BiLSTM_CRF(object):
                 inputs=self.word_embeddings,
                 sequence_length=self.sequence_lengths,
                 dtype=tf.float32)
-            output = tf.concat([output_fw_seq, output_bw_seq], axis=-1)     # batch_size * sentence * 600
+            output = tf.concat([output_fw_seq, output_bw_seq], axis=-1)     # batch_size * sent_size * 600
             # output = tf.nn.dropout(output, self.dropout_pl)     # 这里的dropout可以考虑去掉
             output = tf.layers.batch_normalization(output)
 
@@ -134,9 +135,11 @@ class BiLSTM_CRF(object):
             else:
                 optim = tf.train.GradientDescentOptimizer(learning_rate=self.lr_pl)
 
-            grads_and_vars = optim.compute_gradients(self.loss)
-            grads_and_vars_clip = [[tf.clip_by_value(g, -self.clip_grad, self.clip_grad), v] for g, v in grads_and_vars]
-            self.train_op = optim.apply_gradients(grads_and_vars_clip, global_step=self.global_step)
+            update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+            with tf.control_dependencies(update_ops):
+                grads_and_vars = optim.compute_gradients(self.loss)
+                grads_and_vars_clip = [[tf.clip_by_value(g, -self.clip_grad, self.clip_grad), v] for g, v in grads_and_vars]
+                self.train_op = optim.apply_gradients(grads_and_vars_clip, global_step=self.global_step)
 
     def init_op(self):
         self.init_op = tf.global_variables_initializer()
@@ -315,4 +318,5 @@ class BiLSTM_CRF(object):
             for i in range(len(sent)):
                 sent_res.append([sent[i], tag[i], tag_[i]])
             model_predict.append(sent_res)
+        print(label_list[0])
         self.logger.info(conlleval(model_predict))

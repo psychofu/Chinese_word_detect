@@ -28,8 +28,8 @@ parser.add_argument('--clip', type=float, default=5.0, help='gradient clipping')
 parser.add_argument('--dropout', type=float, default=0.5, help='dropout keep_prob')
 parser.add_argument('--embedding_dim', type=int, default=300, help='random init char embedding_dim')
 parser.add_argument('--shuffle', type=bool, default=True, help='shuffle training data before each epoch')
-parser.add_argument('--mode', type=str, default='train', help='train/test/demo')
-parser.add_argument('--demo_model', type=str, default='correctModel', help='model for test and demo')
+parser.add_argument('--mode', type=str, default='demo', help='train/test/demo')
+parser.add_argument('--model_path', type=str, default='correctModel', help='model for test and demo')
 args = parser.parse_args()
 
 # vocabulary build
@@ -49,7 +49,7 @@ tag2label = {"T":1, "F":0}
 
 # -----------------------  path_set  ------------------------------------
 paths = {}
-output_path = os.path.join('model_path', args.dataset_name, args.demo_model)
+output_path = os.path.join('model_path', args.dataset_name, args.model_path)
 if not os.path.exists(output_path):
     os.makedirs(output_path)
 # 保存图的文件夹
