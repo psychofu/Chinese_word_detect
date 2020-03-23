@@ -135,12 +135,13 @@ class BiLSTM_CRF(object):
             else:
                 optim = tf.train.GradientDescentOptimizer(learning_rate=self.lr_pl)
 
-            update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-            with tf.control_dependencies(update_ops):
-                # grads_and_vars = optim.compute_gradients(self.loss)
-                # grads_and_vars_clip = [[tf.clip_by_value(g, -self.clip_grad, self.clip_grad), v] for g, v in grads_and_vars]
-                # self.train_op = optim.apply_gradients(grads_and_vars_clip, global_step=self.global_step)
-                self.train_op = optim.minimize(self.loss)
+            # grads_and_vars = optim.compute_gradients(self.loss)
+            # grads_and_vars_clip = [[tf.clip_by_value(g, -self.clip_grad, self.clip_grad), v] for g, v in grads_and_vars]
+            # self.train_op = optim.apply_gradients(grads_and_vars_clip, global_step=self.global_step)
+            with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
+                grads_and_vars = optim.compute_gradients(self.loss)
+                grads_and_vars_clip = [[tf.clip_by_value(g, -self.clip_grad, self.clip_grad), v] for g, v in grads_and_vars]
+                self.train_op = optim.apply_gradients(grads_and_vars_clip, global_step=self.global_step)
 
     def init_op(self):
         self.init_op = tf.global_variables_initializer()
