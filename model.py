@@ -230,6 +230,7 @@ class BiLSTM_CRF(object):
         for step, (seqs, labels) in enumerate(batches):     # batch_size个数据(batch_size句话)
             sys.stdout.write(' processing: {} batch / {} batches.'.format(step + 1, num_batches) + '\r')
             step_num = epoch * num_batches + step + 1
+            # 这里有pad操作
             feed_dict, _ = self.get_feed_dict(seqs, labels, self.lr, self.dropout_keep_prob)
             _, loss_train, summary, step_num_ = sess.run([self.train_op, self.loss, self.merged, self.global_step],
                                                          feed_dict=feed_dict)
