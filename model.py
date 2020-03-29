@@ -192,7 +192,7 @@ class BiLSTM_CRF(object):
             self.logger.info('=========== testing ===========')
             saver.restore(sess, self.model_path)
             label_list, seq_len_list = self.dev_one_epoch(sess, test)
-            self.evaluate(label_list, seq_len_list, test)
+            self.evaluate(label_list, test)
 
     def demo_one(self, sess, sent):
         """

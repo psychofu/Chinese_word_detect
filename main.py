@@ -28,7 +28,7 @@ parser.add_argument('--clip', type=float, default=5.0, help='gradient clipping')
 parser.add_argument('--dropout', type=float, default=0.5, help='dropout keep_prob')
 parser.add_argument('--embedding_dim', type=int, default=300, help='random init char embedding_dim')
 parser.add_argument('--shuffle', type=bool, default=True, help='shuffle training data before each epoch')
-parser.add_argument('--mode', type=str, default='train', help='train/test/demo')
+parser.add_argument('--mode', type=str, default='test', help='train/test/demo')
 parser.add_argument('--model_path', type=str, default='correctModel', help='model for test and demo')
 args = parser.parse_args()
 
@@ -118,6 +118,6 @@ elif args.mode == 'demo':
             elif demo_sent == '' or demo_sent.isspace():
                 demo_sent = "未见明确神经脉管机。"
             demo_sent = list(demo_sent.strip())
-            demo_data = [(demo_sent, ['T'] * len(demo_sent))]
+            demo_data = [(demo_sent, ['T'] * len(demo_sent))]       # 这里的label需要传入，不过后面不会使用，故均为T无影响
             tag = model.demo_one(sess, demo_data)
             print(demo_sent, "\n", tag)
