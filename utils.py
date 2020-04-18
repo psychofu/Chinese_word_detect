@@ -20,7 +20,11 @@ def read_corpus(corpus_path):
         # i = i + 1
         if line != '\n':        # 语料库中的句子空一行代表一句
             # print(i, line.strip())
-            [char, label] = line.strip().split()
+            line = line.strip("\n")
+            line = line.split(" ")
+            # if len(line) != 2:
+            #     continue
+            [char, label] = line
             sent_.append(char)
             tag_.append(label)
         else:
@@ -44,7 +48,12 @@ def read_trains(corpus_path):
     sent_, tag_ = [], []
     for line in lines:
         if line != '\n':        # 语料库中的句子空一行代表一句
-            [char, label] = line.strip().split()    # 按空格split
+            line = line.strip("\n")
+            line = line.split(" ")
+            # if len(line) != 2:
+            #     print("error data")
+            #     continue
+            [char, label] = line
             sent_.append(char)
             tag_.append(label)
         else:
