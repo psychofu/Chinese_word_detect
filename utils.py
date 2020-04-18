@@ -216,6 +216,10 @@ def conlleval(label_predict):
     info = "precision: {}, recall: {}, F_value: {}".format(Precision, Recall, F_value)
 
     return info
+# if __name__ == '__main__':
+#     label = [[["A", "T", "T"],["A", "F", "T"],["A", "T", "F"],["A", "T", "F"],["A", "T", "T"],["A", "T", "T"],["A", "T", "T"]]]
+#     print(conlleval(label))
+
 
 def get_logger(filename):
     logger = logging.getLogger('logger')
@@ -227,6 +231,6 @@ def get_logger(filename):
     if not logger.handlers:
         logger.addHandler(handler)
     return logger
-# if __name__ == '__main__':
-#     word2id = read_dictionary(os.path.join('data_path', 'MSRA', 'word2id.pkl'))
-#     build_character_embeddings('./sgns.wiki.char', './vectors.npy', word2id, 300)
+
+
+
