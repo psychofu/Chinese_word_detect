@@ -142,4 +142,4 @@ def start_server(ip, port):
 
 
 if __name__ == '__main__':
-    start_server('0.0.0.0', 8001)
+    start_server('0.0.0.0', 8000)

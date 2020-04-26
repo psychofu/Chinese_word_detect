@@ -192,7 +192,36 @@ class BiLSTM_CRF(object):
             self.logger.info('=========== testing ===========')
             saver.restore(sess, self.model_path)
             label_list, seq_len_list = self.dev_one_epoch(sess, test)
-            self.evaluate(label_list, test)
+            leng = len(label_list)
+            f = open("E:\\py_project\\Chinese_word_detect\\detectError.txt", mode="w", encoding="utf-8")
+            totalwords = 0
+            wrongwords = 0
+            totalsent = 0
+            wrongsent = 0
+            for i in range(leng):
+                flag = False
+                totalwords = totalwords + len(label_list[i])
+                totalsent = totalsent + 1
+                for j in range(len(label_list[i])):
+                    if label_list[i][j] == 1:
+                        label_list[i][j] = "T"
+                    else:
+                        label_list[i][j] = "F"
+                    if label_list[i][j] != test[i][1][j]:
+                        print(str(i) + "  " + str(j) + ": " + test[i][0][j] + "--" + test[i][1][j])
+                        wrongwords = wrongwords + 1
+                        flag = True
+
+                if flag:
+                    wrongsent = wrongsent + 1
+
+                f.write(str(label_list[i]) + "\n")
+                f.write(str(test[i][1]) + "\n")
+                f.write(str(test[i][0]))
+                f.write("\n\n")
+            f.close()
+            print(wrongwords / totalwords)
+            print(wrongsent / totalsent)
 
     def demo_one(self, sess, sent):
         """
