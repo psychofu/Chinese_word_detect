@@ -1,3 +1,6 @@
+import sys
+sys.path.append('/home/aistudio/external-libraries')
+
 import os
 import pickle
 import random

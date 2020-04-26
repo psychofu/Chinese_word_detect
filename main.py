@@ -1,3 +1,6 @@
+import sys
+sys.path.append('/home/aistudio/external-libraries')
+
 import tensorflow as tf
 import os, argparse
 from model import BiLSTM_CRF
