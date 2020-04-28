@@ -107,7 +107,6 @@ def vocab_build(vocab_path, corpus_path, min_count=1):  # min_count设置过滤�
     print(len(word2id))
     with open(vocab_path, 'wb') as fw:
         pickle.dump(word2id, fw)
-        # print(word2id)
 
 def sentence2id(sent, word2id):
     """

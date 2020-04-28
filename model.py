@@ -29,7 +29,7 @@ class BiLSTM_CRF(object):
         self.model_path = paths['model_path']
         self.summary_path = paths['summary_path']
         self.logger = get_logger(paths['log_path'])
-        self.result_path = paths['result_path']
+
         self.config = config
 
     def build_graph(self):
@@ -59,7 +59,7 @@ class BiLSTM_CRF(object):
                                            dtype=tf.float32,
                                            trainable=True,
                                            name="_word_embeddings")
-            word_embeddings = tf.nn.embedding_lookup(params=_word_embeddings,       # 对照embedding将batch * sentence转换，batch * sentence * 300
+            word_embeddings = tf.nn.embedding_lookup(params=_word_embeddings,       # 对照embedding将batch * sentence转换，batch * sentence_length * 300
                                                      ids=self.word_ids, # [[一句话的索引], [], []]
                                                      name="word_embeddings")
         # 为了防止或减轻过拟合，让某个神经元的激活值以一定的概率p，让其停止工作，这次训练过程中不更新权值，也不参加神经网络的计算
