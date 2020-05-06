@@ -252,7 +252,7 @@ class BiLSTM_CRF(object):
         :param saver:
         :return:
         """
-        num_batches = (len(train) + self.batch_size - 1) // self.batch_size # 更加batch_size计算需要多少个batch
+        num_batches = (len(train) + self.batch_size - 1) // self.batch_size # batch_size计算需要多少个batch
 
         start_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         # 句子和tag转变为数值和01
