@@ -1,5 +1,6 @@
 import os
 import sys
+sys.path.append('/home/aistudio/external-libraries')
 import time
 
 import tensorflow as tf
@@ -28,7 +29,7 @@ class BiLSTM_CRF(object):
         self.model_path = paths['model_path']
         self.summary_path = paths['summary_path']
         self.logger = get_logger(paths['log_path'])
-        self.result_path = paths['result_path']
+
         self.config = config
 
     def build_graph(self):
@@ -58,7 +59,7 @@ class BiLSTM_CRF(object):
                                            dtype=tf.float32,
                                            trainable=True,
                                            name="_word_embeddings")
-            word_embeddings = tf.nn.embedding_lookup(params=_word_embeddings,       # 对照embedding将batch * sentence转换，batch * sentence * 300
+            word_embeddings = tf.nn.embedding_lookup(params=_word_embeddings,       # 对照embedding将batch * sentence转换，batch * sentence_length * 300
                                                      ids=self.word_ids, # [[一句话的索引], [], []]
                                                      name="word_embeddings")
         # 为了防止或减轻过拟合，让某个神经元的激活值以一定的概率p，让其停止工作，这次训练过程中不更新权值，也不参加神经网络的计算
@@ -192,7 +193,36 @@ class BiLSTM_CRF(object):
             self.logger.info('=========== testing ===========')
             saver.restore(sess, self.model_path)
             label_list, seq_len_list = self.dev_one_epoch(sess, test)
-            self.evaluate(label_list, seq_len_list, test)
+            leng = len(label_list)
+            f = open("E:\\py_project\\Chinese_word_detect\\detectError.txt", mode="w", encoding="utf-8")
+            totalwords = 0
+            wrongwords = 0
+            totalsent = 0
+            wrongsent = 0
+            for i in range(leng):
+                flag = False
+                totalwords = totalwords + len(label_list[i])
+                totalsent = totalsent + 1
+                for j in range(len(label_list[i])):
+                    if label_list[i][j] == 1:
+                        label_list[i][j] = "T"
+                    else:
+                        label_list[i][j] = "F"
+                    if label_list[i][j] != test[i][1][j]:
+                        print(str(i) + "  " + str(j) + ": " + test[i][0][j] + "--" + test[i][1][j])
+                        wrongwords = wrongwords + 1
+                        flag = True
+
+                if flag:
+                    wrongsent = wrongsent + 1
+
+                f.write(str(label_list[i]) + "\n")
+                f.write(str(test[i][1]) + "\n")
+                f.write(str(test[i][0]))
+                f.write("\n\n")
+            f.close()
+            print(wrongwords / totalwords)
+            print(wrongsent / totalsent)
 
     def demo_one(self, sess, sent):
         """
@@ -222,7 +252,7 @@ class BiLSTM_CRF(object):
         :param saver:
         :return:
         """
-        num_batches = (len(train) + self.batch_size - 1) // self.batch_size # 更加batch_size计算需要多少个batch
+        num_batches = (len(train) + self.batch_size - 1) // self.batch_size # batch_size计算需要多少个batch
 
         start_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         # 句子和tag转变为数值和01

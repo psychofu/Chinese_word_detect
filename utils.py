@@ -1,3 +1,6 @@
+import sys
+sys.path.append('/home/aistudio/external-libraries')
+
 import os
 import pickle
 import random
@@ -20,7 +23,11 @@ def read_corpus(corpus_path):
         # i = i + 1
         if line != '\n':        # 语料库中的句子空一行代表一句
             # print(i, line.strip())
-            [char, label] = line.strip().split()
+            line = line.strip("\n")
+            line = line.split(" ")
+            # if len(line) != 2:
+            #     continue
+            [char, label] = line
             sent_.append(char)
             tag_.append(label)
         else:
@@ -44,7 +51,12 @@ def read_trains(corpus_path):
     sent_, tag_ = [], []
     for line in lines:
         if line != '\n':        # 语料库中的句子空一行代表一句
-            [char, label] = line.strip().split()    # 按空格split
+            line = line.strip("\n")
+            line = line.split(" ")
+            # if len(line) != 2:
+            #     print("error data")
+            #     continue
+            [char, label] = line
             sent_.append(char)
             tag_.append(label)
         else:
@@ -95,7 +107,6 @@ def vocab_build(vocab_path, corpus_path, min_count=1):  # min_count设置过滤�
     print(len(word2id))
     with open(vocab_path, 'wb') as fw:
         pickle.dump(word2id, fw)
-        # print(word2id)
 
 def sentence2id(sent, word2id):
     """
@@ -216,6 +227,10 @@ def conlleval(label_predict):
     info = "precision: {}, recall: {}, F_value: {}".format(Precision, Recall, F_value)
 
     return info
+# if __name__ == '__main__':
+#     label = [[["A", "T", "T"],["A", "F", "T"],["A", "T", "F"],["A", "T", "F"],["A", "T", "T"],["A", "T", "T"],["A", "T", "T"]]]
+#     print(conlleval(label))
+
 
 def get_logger(filename):
     logger = logging.getLogger('logger')
@@ -227,6 +242,6 @@ def get_logger(filename):
     if not logger.handlers:
         logger.addHandler(handler)
     return logger
-# if __name__ == '__main__':
-#     word2id = read_dictionary(os.path.join('data_path', 'MSRA', 'word2id.pkl'))
-#     build_character_embeddings('./sgns.wiki.char', './vectors.npy', word2id, 300)
+
+
+
